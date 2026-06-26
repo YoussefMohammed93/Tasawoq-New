@@ -124,6 +124,20 @@ export const updateUserRole = mutation({
       throw new Error("Only admins can update user roles");
     }
 
+    if (args.newRole === "user") {
+      const userToUpdate = await ctx.db.get(args.userId);
+      if (userToUpdate?.userRole === "admin") {
+        const admins = await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("userRole"), "admin"))
+          .collect();
+
+        if (admins.length <= 1) {
+          throw new Error("Cannot remove the last admin from the system");
+        }
+      }
+    }
+
     return await ctx.db.patch(args.userId, { userRole: args.newRole });
   },
 });
